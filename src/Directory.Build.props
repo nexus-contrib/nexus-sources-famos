@@ -1,0 +1,30 @@
+<Project>
+
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+  
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>embedded</DebugType>
+    <EmbedAllSources>true</EmbedAllSources>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+    
+  <PropertyGroup>
+    <Authors>https://github.com/Apollo3zehn</Authors>
+    <Company>https://github.com/Apollo3zehn</Company>
+    <Copyright>Apollo3zehn</Copyright>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Major>1</Major>
+    <Minor>0</Minor>
+    <Revision>0</Revision>
+    <VersionSuffix>beta.1</VersionSuffix>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <GetPackageVersionDependsOn>$(GetPackageVersionDependsOn);CreateMetadata</GetPackageVersionDependsOn>
+  </PropertyGroup>
+
+</Project>

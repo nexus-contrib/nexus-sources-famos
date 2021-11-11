@@ -1,0 +1,16 @@
+{
+  "/A/B/C": {
+    "FileSources": [
+      {
+        "Name": "raw",
+        "PathSegments": [
+          "'DATA'",
+          "yyyy-MM"
+        ],
+        "FileTemplate": "yyyy-MM-dd_HH-mm-ss'.dat'",
+        "FilePeriod": "00:10:00",
+        "UtcOffset": "00:00:00"
+      }
+    ]
+  }
+}
