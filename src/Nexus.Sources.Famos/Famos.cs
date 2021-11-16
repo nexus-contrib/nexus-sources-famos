@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace Nexus.Sources.Famos
 {
     [ExtensionDescription("Provides access to databases with Famos files.")]
-    public class FamosDataSource : StructuredFileDataSource
+    public class Famos : StructuredFileDataSource
     {
         #region Fields
 
@@ -132,7 +132,7 @@ namespace Nexus.Sources.Famos
                         throw new Exception($"The data type '{component.PackInfo.DataType}' is not supported.");
 
                     // invoke generic 'ReadData' method
-                    var methodName = nameof(FamosDataSource.ReadData);
+                    var methodName = nameof(Famos.ReadData);
                     var flags = BindingFlags.NonPublic | BindingFlags.Instance;
                     var genericType = FamosUtilities.GetTypeFromNexusDataType(fileDataType);
                     var parameters = new object[] { famosFile, famosFileResource };

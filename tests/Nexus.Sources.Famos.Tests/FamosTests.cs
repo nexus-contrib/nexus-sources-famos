@@ -11,13 +11,13 @@ using Xunit;
 
 namespace Nexus.Sources.Famos.Tests
 {
-    public class FamosDataSourceTests
+    public class FamosTests
     {
         [Fact]
         public async Task ProvidesCatalog()
         {
             // arrange
-            var dataSource = new FamosDataSource() as IDataSource;
+            var dataSource = new Famos() as IDataSource;
 
             var context = new DataSourceContext(
                 ResourceLocator: new Uri("Database", UriKind.Relative),
@@ -52,7 +52,7 @@ namespace Nexus.Sources.Famos.Tests
         public async Task ProvidesDataAvailability()
         {
             // arrange
-            var dataSource = new FamosDataSource() as IDataSource;
+            var dataSource = new Famos() as IDataSource;
 
             var context = new DataSourceContext(
                 ResourceLocator: new Uri("Database", UriKind.Relative),
@@ -88,7 +88,7 @@ namespace Nexus.Sources.Famos.Tests
         public async Task CanReadFullDay()
         {
             // arrange
-            var dataSource = new FamosDataSource() as IDataSource;
+            var dataSource = new Famos() as IDataSource;
 
             var context = new DataSourceContext(
                 ResourceLocator: new Uri("Database", UriKind.Relative),
