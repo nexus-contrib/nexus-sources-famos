@@ -12,7 +12,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Nexus.Sources.Famos
+namespace Nexus.Sources
 {
     [ExtensionDescription("Provides access to databases with Famos files.")]
     public class Famos : StructuredFileDataSource

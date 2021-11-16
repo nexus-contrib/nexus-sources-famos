@@ -9,7 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Nexus.Sources.Famos.Tests
+namespace Nexus.Sources.Tests
 {
     public class FamosTests
     {

@@ -7,7 +7,7 @@ using System.Reflection.Emit;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Nexus.Sources.Famos
+namespace Nexus.Sources
 {
     internal static class FamosUtilities
     {

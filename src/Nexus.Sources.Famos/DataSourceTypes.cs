@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Nexus.Sources.Famos
+namespace Nexus.Sources
 {
     internal record CatalogDescription(
         ExtendedFileSource[] FileSources,
