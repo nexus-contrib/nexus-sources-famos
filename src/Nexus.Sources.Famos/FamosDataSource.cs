@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Nexus.Sources.Famos
 {
-    [ExtensionIdentification("Famos", "Famos", "Provides access to databases with Famos files.")]
+    [ExtensionDescription("Provides access to databases with Famos files.")]
     public class FamosDataSource : StructuredFileDataSource
     {
         #region Fields
