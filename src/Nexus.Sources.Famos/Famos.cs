@@ -120,12 +120,12 @@ namespace Nexus.Sources
 
                 var channels = famosFile.Groups.SelectMany(group => group.Channels).Concat(famosFile.Channels).ToList();
 
-                var famosFileResource = channels.FirstOrDefault(current =>
+                var famosFileChannel = channels.FirstOrDefault(current =>
                     FamosUtilities.EnforceNamingConvention(current.Name) == info.CatalogItem.Resource.Id);
 
-                if (famosFileResource != null)
+                if (famosFileChannel != null)
                 {
-                    var component = famosFile.FindComponent(famosFileResource);
+                    var component = famosFile.FindComponent(famosFileChannel);
                     var fileDataType = FamosUtilities.GetNexusDataTypeFromFamosDataType(component.PackInfo.DataType);
 
                     if (fileDataType == 0)
@@ -135,7 +135,7 @@ namespace Nexus.Sources
                     var methodName = nameof(Famos.ReadData);
                     var flags = BindingFlags.NonPublic | BindingFlags.Instance;
                     var genericType = FamosUtilities.GetTypeFromNexusDataType(fileDataType);
-                    var parameters = new object[] { famosFile, famosFileResource };
+                    var parameters = new object[] { famosFile, famosFileChannel };
                     var result = (double[])FamosUtilities.InvokeGenericMethod(this, methodName, flags, genericType, parameters);
 
                     cancellationToken.ThrowIfCancellationRequested();
@@ -207,10 +207,10 @@ namespace Nexus.Sources
                     if (analogComponent == null)
                         continue;
 
-                    var famosFileResource = component.Channels.First();
+                    var famosFileChannel = component.Channels.First();
 
                     // resource id
-                    var resourceId = FamosUtilities.EnforceNamingConvention(famosFileResource.Name);
+                    var resourceId = FamosUtilities.EnforceNamingConvention(famosFileChannel.Name);
 
                     // samples per day
                     var xAxisScaling = component.XAxisScaling;
@@ -221,7 +221,7 @@ namespace Nexus.Sources
                     var samplePeriod = TimeSpan.FromSeconds((double)xAxisScaling.DeltaX);
 
                     // group name
-                    //var group = famosFile.Groups.FirstOrDefault(group => group.Resources.Contains(famosFileResource));
+                    //var group = famosFile.Groups.FirstOrDefault(group => group.Resources.Contains(famosFileChannel));
                     //var groupName = group != null ? group.Name : "General";
 
                     // data type
