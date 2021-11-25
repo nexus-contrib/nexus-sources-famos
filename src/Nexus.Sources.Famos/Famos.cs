@@ -66,9 +66,13 @@ namespace Nexus.Sources
             return Task.FromResult(fileSourceProvider);
         }
 
-        protected override Task<string[]> GetCatalogIdsAsync(CancellationToken cancellationToken)
+        protected override Task<string[]> GetCatalogIdsAsync(string path, CancellationToken cancellationToken)
         {
-            return Task.FromResult(_config.Keys.ToArray());
+            if (path == "/")
+                return Task.FromResult(_config.Keys.ToArray());
+
+            else
+                return Task.FromResult(new string[0]);
         }
 
         protected override Task<ResourceCatalog> GetCatalogAsync(string catalogId, CancellationToken cancellationToken)
