@@ -5,8 +5,9 @@ using System.Collections.Generic;
 namespace Nexus.Sources
 {
     internal record CatalogDescription(
+        string Title,
         ExtendedFileSource[] FileSources,
-        Dictionary<string, string>? CustomParameters = null);
+        Dictionary<string, string>? CustomParameters = default);
 
     internal record ExtendedFileSource : FileSource
     {
