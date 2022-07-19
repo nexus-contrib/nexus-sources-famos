@@ -80,7 +80,6 @@ namespace Nexus.Sources
             foreach (var (fileSourceId, fileSource) in catalogDescription.FileSources)
             {
                 var filePaths = default(string[]);
-
                 var catalogSourceFiles = fileSource.AdditionalProperties.GetStringArray("CatalogSourceFiles");
 
                 if (catalogSourceFiles is not null)
@@ -103,7 +102,7 @@ namespace Nexus.Sources
                 foreach (var filePath in filePaths)
                 {
                     using var famosFile = FamosFile.Open(filePath);
-                    var resources = GetResources(famosFile, fileSourceId, fileSource);
+                    var resources = GetResources(famosFile, fileSourceId);
 
                     var newCatalog = new ResourceCatalogBuilder(id: catalogId)
                         .AddResources(resources)
@@ -197,7 +196,7 @@ namespace Nexus.Sources
             return doubleData;
         }
 
-        private List<Resource> GetResources(FamosFile famosFile, string fileSourceId, FileSource fileSource)
+        private List<Resource> GetResources(FamosFile famosFile, string fileSourceId)
         {
             var fields = famosFile.Fields.Where(field => field.Type == FamosFileFieldType.MultipleYToSingleEquidistantTime).ToList();
 
