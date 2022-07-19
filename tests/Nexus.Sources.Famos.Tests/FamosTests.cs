@@ -31,8 +31,8 @@ namespace Nexus.Sources.Tests
             // act
             var actual = await dataSource.GetCatalogAsync("/A/B/C", CancellationToken.None);
             var actualIds = actual.Resources.Select(resource => resource.Id).ToList();
-            var actualUnits = actual.Resources.Select(resource => GetPropertyOrDefault(resource.Properties, "unit")).ToList();
-            var actualGroups = actual.Resources.SelectMany(resource => GetArrayOrDefault(resource.Properties, "groups")).ToList();
+            var actualUnits = actual.Resources.Select(resource => resource.Properties.GetStringValue("unit")).ToList();
+            var actualGroups = actual.Resources.SelectMany(resource => resource.Properties.GetStringArray("groups")).ToList();
             var actualTimeRange = await dataSource.GetTimeRangeAsync("/A/B/C", CancellationToken.None);
 
             // assert
@@ -47,30 +47,6 @@ namespace Nexus.Sources.Tests
             Assert.True(expectedGroups.SequenceEqual(actualGroups.Skip(49).Take(2)));
             Assert.Equal(expectedStartDate, actualTimeRange.Begin);
             Assert.Equal(expectedEndDate, actualTimeRange.End);
-
-            string? GetPropertyOrDefault(JsonElement? element, string propertyName)
-            {
-                if (!element.HasValue)
-                    return default;
-
-                if (element.Value.TryGetProperty(propertyName, out var result))
-                    return result.GetString();
-
-                else
-                    return default;
-            }
-
-            string[] GetArrayOrDefault(JsonElement? element, string propertyName)
-            {
-                if (!element.HasValue)
-                    return new string[0];
-
-                if (element.Value.TryGetProperty(propertyName, out var result))
-                    return result.EnumerateArray().Select(current => current.GetString()!).ToArray();
-
-                else
-                    return new string[0];
-            }
         }
 
         [Fact]

@@ -4,6 +4,7 @@ using Nexus.DataModel;
 using Nexus.Extensibility;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -20,6 +21,11 @@ namespace Nexus.Sources
         "https://github.com/Apollo3zehn/nexus-sources-famos")]
     public class Famos : StructuredFileDataSource
     {
+        record CatalogDescription(
+            string Title,
+            Dictionary<string, FileSource> FileSources, 
+            JsonElement? AdditionalProperties);
+
         #region Fields
 
         private Dictionary<string, CatalogDescription> _config = default!;
@@ -38,10 +44,10 @@ namespace Nexus.Sources
 
         protected override async Task SetContextAsync(DataSourceContext context, ILogger logger, CancellationToken cancellationToken)
         {
-            this.Context = context;
-            this.Logger = logger;
+            Context = context;
+            Logger = logger;
 
-            var configFilePath = Path.Combine(this.Root, "config.json");
+            var configFilePath = Path.Combine(Root, "config.json");
 
             if (!File.Exists(configFilePath))
                 throw new Exception($"Configuration file {configFilePath} not found.");
@@ -50,28 +56,11 @@ namespace Nexus.Sources
             _config = JsonSerializer.Deserialize<Dictionary<string, CatalogDescription>>(jsonString) ?? throw new Exception("config is null");
         }
 
-        protected override Task<FileSourceProvider> GetFileSourceProviderAsync(CancellationToken cancellationToken)
+        protected override Task<Func<string, Dictionary<string, FileSource>>> GetFileSourceProviderAsync(
+            CancellationToken cancellationToken)
         {
-            var allFileSources = _config.ToDictionary(
-                config => config.Key,
-                config => config.Value.FileSources.Cast<FileSource>().ToArray());
-
-            var fileSourceProvider = new FileSourceProvider(
-                All: allFileSources,
-                Single: catalogItem =>
-                {
-                    var properties = catalogItem.Resource.Properties;
-
-                    if (properties is null)
-                        throw new ArgumentNullException(nameof(properties));
-
-                    var fileSourceName = properties.Value.GetProperty("FileSource").GetString();
-
-                    return allFileSources[catalogItem.Catalog.Id]
-                        .First(fileSource => ((ExtendedFileSource)fileSource).Name == fileSourceName);
-                });
-
-            return Task.FromResult(fileSourceProvider);
+            return Task.FromResult<Func<string, Dictionary<string, FileSource>>>(
+                catalogId => _config[catalogId].FileSources);
         }
 
         protected override Task<CatalogRegistration[]> GetCatalogRegistrationsAsync(string path, CancellationToken cancellationToken)
@@ -88,19 +77,22 @@ namespace Nexus.Sources
             var catalogDescription = _config[catalogId];
             var catalog = new ResourceCatalog(id: catalogId);
 
-            foreach (var fileSource in catalogDescription.FileSources)
+            foreach (var (fileSourceId, fileSource) in catalogDescription.FileSources)
             {
                 var filePaths = default(string[]);
 
-                if (fileSource.CatalogSourceFiles is not null)
+                var catalogSourceFiles = fileSource.AdditionalProperties.GetStringArray("CatalogSourceFiles");
+
+                if (catalogSourceFiles is not null)
                 {
-                    filePaths = fileSource.CatalogSourceFiles
-                        .Select(filePath => Path.Combine(this.Root, filePath))
+                    filePaths = catalogSourceFiles
+                        .Where(filePath => filePath is not null)
+                        .Select(filePath => Path.Combine(Root, filePath!))
                         .ToArray();
                 }
                 else
                 {
-                    if (!this.TryGetFirstFile(fileSource, out var filePath))
+                    if (!TryGetFirstFile(fileSource, out var filePath))
                         continue;
 
                     filePaths = new[] { filePath };
@@ -111,7 +103,7 @@ namespace Nexus.Sources
                 foreach (var filePath in filePaths)
                 {
                     using var famosFile = FamosFile.Open(filePath);
-                    var resources = this.GetResources(famosFile, fileSource);
+                    var resources = GetResources(famosFile, fileSourceId, fileSource);
 
                     var newCatalog = new ResourceCatalogBuilder(id: catalogId)
                         .AddResources(resources)
@@ -133,7 +125,8 @@ namespace Nexus.Sources
                 var channels = famosFile.Groups.SelectMany(group => group.Channels).Concat(famosFile.Channels).ToList();
 
                 var famosFileChannel = channels.FirstOrDefault(current =>
-                    FamosUtilities.EnforceNamingConvention(current.Name) == info.CatalogItem.Resource.Id);
+                    TryEnforceNamingConvention(current.Name, out var resourceId) && 
+                    resourceId == info.CatalogItem.Resource.Id);
 
                 if (famosFileChannel != default)
                 {
@@ -170,7 +163,7 @@ namespace Nexus.Sources
                     // skip data
                     else
                     {
-                        this.Logger.LogDebug("The actual buffer size does not match the expected size, which indicates an incomplete file");
+                        Logger.LogDebug("The actual buffer size does not match the expected size, which indicates an incomplete file");
                     }
                 }
             });
@@ -204,7 +197,7 @@ namespace Nexus.Sources
             return doubleData;
         }
 
-        private List<Resource> GetResources(FamosFile famosFile, ExtendedFileSource fileSource)
+        private List<Resource> GetResources(FamosFile famosFile, string fileSourceId, FileSource fileSource)
         {
             var fields = famosFile.Fields.Where(field => field.Type == FamosFileFieldType.MultipleYToSingleEquidistantTime).ToList();
 
@@ -222,7 +215,8 @@ namespace Nexus.Sources
                     var famosFileChannel = component.Channels.First();
 
                     // resource id
-                    var resourceId = FamosUtilities.EnforceNamingConvention(famosFileChannel.Name);
+                    if (!TryEnforceNamingConvention(famosFileChannel.Name, out var resourceId))
+                        continue;
 
                     // samples per day
                     var xAxisScaling = component.XAxisScaling;
@@ -237,7 +231,7 @@ namespace Nexus.Sources
                     //var groupName = group != default ? group.Name : "General";
 
                     // data type
-                    //var dataType = this.GetNexusDataTypeFromFamosFileDataType(component.PackInfo.DataType);
+                    //var dataType = GetNexusDataTypeFromFamosFileDataType(component.PackInfo.DataType);
                     var dataType = NexusDataType.FLOAT64;
 
                     // unit
@@ -251,8 +245,8 @@ namespace Nexus.Sources
                     // create resource
                     var resource = new ResourceBuilder(id: resourceId)
                         .WithUnit(unit)
-                        .WithGroups(fileSource.Name)
-                        .WithProperty("FileSource", fileSource.Name)
+                        .WithGroups(fileSourceId)
+                        .WithProperty(StructuredFileDataSource.FileSourceKey, fileSourceId)
                         .AddRepresentation(representation)
                         .Build();
 
@@ -261,6 +255,15 @@ namespace Nexus.Sources
 
                 return resources;
             }).ToList();
+        }
+
+        private bool TryEnforceNamingConvention(string resourceId, [NotNullWhen(returnValue: true)] out string newResourceId)
+        {
+            newResourceId = resourceId;
+            newResourceId = Resource.InvalidIdCharsExpression.Replace(newResourceId, "");
+            newResourceId = Resource.InvalidIdStartCharsExpression.Replace(newResourceId, "");
+
+            return Resource.ValidIdExpression.IsMatch(newResourceId);
         }
 
         #endregion

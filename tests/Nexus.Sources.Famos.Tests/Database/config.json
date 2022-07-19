@@ -1,8 +1,7 @@
 {
   "/A/B/C": {
-    "FileSources": [
-      {
-        "Name": "raw",
+    "FileSources": {
+      "raw": {
         "PathSegments": [
           "'DATA'",
           "yyyy-MM"
@@ -11,6 +10,6 @@
         "FilePeriod": "00:10:00",
         "UtcOffset": "00:00:00"
       }
-    ]
+    }
   }
 }
