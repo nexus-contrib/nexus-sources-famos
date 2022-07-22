@@ -5,11 +5,12 @@
     <RestoreAdditionalProjectSources>
       https://www.myget.org/F/apollo3zehn-dev/api/v3/index.json
     </RestoreAdditionalProjectSources>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="ImcFamosFile" Version="2.0.1" />
-    <PackageReference Include="Nexus.Extensibility" Version="1.0.0-beta.11.162">
+    <PackageReference Include="Nexus.Extensibility" Version="1.0.0-beta.11.165">
       <ExcludeAssets>runtime;native</ExcludeAssets>
     </PackageReference>
   </ItemGroup>
