@@ -42,13 +42,15 @@ jobs:
         run: dotnet test -c Release /p:BuildProjectReferences=false
 
       - name: Zip
-        run: cd publish; tar -zcvf ../assets.tar.gz *; cd -
+        run: cd publish; tar -zcvf ../artifacts/assets.tar.gz *; cd -
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
           name: artifacts
-          path: assets.tar.gz
+          path: |
+            artifacts/*.txt
+            artifacts/*.tar.gz
 
     outputs:
       is_release: ${{ env.IS_RELEASE }}
@@ -68,7 +70,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: artifacts
-          path: assets.tar.gz
+          path: artifacts
 
   publish_release:
 
@@ -84,10 +86,10 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: artifacts
-          path: assets.tar.gz
+          path: artifacts
 
       - name: GitHub Release Artifacts
         uses: softprops/action-gh-release@v1
         with:
           body_path: artifacts/tag_body.txt
-          files: assets.tar.gz
+          files: artifacts/assets.tar.gz
