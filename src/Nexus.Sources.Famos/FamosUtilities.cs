@@ -1,11 +1,7 @@
 ﻿using ImcFamosFile;
 using Nexus.DataModel;
-using System;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Nexus.Sources
 {
@@ -53,7 +49,7 @@ namespace Nexus.Sources
 
         public static object InvokeGenericMethod<T>(T instance, string methodName, BindingFlags bindingFlags, Type genericType, object[] parameters)
         {
-            return FamosUtilities.InvokeGenericMethod(typeof(T), instance, methodName, bindingFlags, genericType, parameters);
+            return FamosUtilities.InvokeGenericMethod(typeof(T), instance!, methodName, bindingFlags, genericType, parameters);
         }
 
         public static object InvokeGenericMethod(Type methodParent, object instance, string methodName, BindingFlags bindingFlags, Type genericType, object[] parameters)

@@ -2,16 +2,10 @@
 using Microsoft.Extensions.Logging;
 using Nexus.DataModel;
 using Nexus.Extensibility;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Nexus.Sources
 {
@@ -130,6 +124,7 @@ namespace Nexus.Sources
                     var genericType = FamosUtilities.GetTypeFromNexusDataType(fileDataType);
                     var parameters = new object[] { famosFile, famosFileChannel };
                     var result = (double[])FamosUtilities.InvokeGenericMethod(this, methodName, flags, genericType, parameters);
+                    var elementSize = info.CatalogItem.Representation.ElementSize;
 
                     cancellationToken.ThrowIfCancellationRequested();
 
@@ -137,10 +132,11 @@ namespace Nexus.Sources
                     if (result.Length == info.FileLength)
                     {
                         var byteResult = MemoryMarshal.AsBytes(result.AsSpan());
-                        var offset = (int)info.FileOffset * info.CatalogItem.Representation.ElementSize;
+                        var offset = (int)info.FileOffset * elementSize;
+                        var length = (int)info.FileBlock * elementSize;
 
                         byteResult
-                            .Slice(offset)
+                            .Slice(offset, length)
                             .CopyTo(info.Data.Span);
 
                         info
