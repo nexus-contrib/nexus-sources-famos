@@ -105,10 +105,7 @@ namespace Nexus.Sources
                 using var famosFile = FamosFile.Open(info.FilePath);
 
                 var channels = famosFile.Groups.SelectMany(group => group.Channels).Concat(famosFile.Channels).ToList();
-
-                var famosFileChannel = channels.FirstOrDefault(current =>
-                    TryEnforceNamingConvention(current.Name, out var resourceId) && 
-                    resourceId == info.CatalogItem.Resource.Id);
+                var famosFileChannel = channels.FirstOrDefault(current => current.Name == info.OriginalName);
 
                 if (famosFileChannel != default)
                 {
@@ -230,7 +227,8 @@ namespace Nexus.Sources
                     var resource = new ResourceBuilder(id: resourceId)
                         .WithUnit(unit)
                         .WithGroups(fileSourceId)
-                        .WithProperty(StructuredFileDataSource.FileSourceKey, fileSourceId)
+                        .WithFileSourceId(fileSourceId)
+                        .WithOriginalName(famosFileChannel.Name)
                         .AddRepresentation(representation)
                         .Build();
 
