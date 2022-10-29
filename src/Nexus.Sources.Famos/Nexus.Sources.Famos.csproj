@@ -2,16 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>$(TargetFrameworkVersion)</TargetFramework>
-    <RestoreAdditionalProjectSources>
-      https://www.myget.org/F/apollo3zehn-dev/api/v3/index.json
-    </RestoreAdditionalProjectSources>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Nexus.Sources.StructuredFile" Version="1.0.0-beta.5.8 " />
+    <PackageReference Include="Nexus.Sources.StructuredFile" Version="1.0.0" />
     <PackageReference Include="ImcFamosFile" Version="2.0.1" />
-    <PackageReference Include="Nexus.Extensibility" Version="1.0.0-beta.11.252">
+    <PackageReference Include="Nexus.Extensibility" Version="1.0.0">
       <ExcludeAssets>runtime;native</ExcludeAssets>
     </PackageReference>
   </ItemGroup>
