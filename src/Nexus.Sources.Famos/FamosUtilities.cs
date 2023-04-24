@@ -49,7 +49,7 @@ namespace Nexus.Sources
 
         public static object InvokeGenericMethod<T>(T instance, string methodName, BindingFlags bindingFlags, Type genericType, object[] parameters)
         {
-            return FamosUtilities.InvokeGenericMethod(typeof(T), instance!, methodName, bindingFlags, genericType, parameters);
+            return InvokeGenericMethod(typeof(T), instance!, methodName, bindingFlags, genericType, parameters);
         }
 
         public static object InvokeGenericMethod(Type methodParent, object instance, string methodName, BindingFlags bindingFlags, Type genericType, object[] parameters)
@@ -74,7 +74,7 @@ namespace Nexus.Sources
 
             fixed (T* dataPtr = dataset)
             {
-                FamosUtilities.InternalToDouble(dataPtr, doubleData);
+                InternalToDouble(dataPtr, doubleData);
             }
 
             return doubleData;
@@ -90,7 +90,7 @@ namespace Nexus.Sources
 
         public static class GenericToDouble<T>
         {
-            private static Func<T, double> _to_double_function = GenericToDouble<T>.EmitToDoubleConverter();
+            private static readonly Func<T, double> _to_double_function = GenericToDouble<T>.EmitToDoubleConverter();
 
             private static Func<T, double> EmitToDoubleConverter()
             {

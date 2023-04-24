@@ -7,7 +7,7 @@ To use it, put a `config.json` with the following sample content into the databa
 ```json
 {
   "/A/B/C": {
-    "FileSources": [
+    "FileSourceGroups": [
       {
         "Name": "raw",
         "PathSegments": [

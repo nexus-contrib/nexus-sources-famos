@@ -27,7 +27,7 @@ namespace Nexus.Sources.Tests
             var actualIds = actual.Resources!.Select(resource => resource.Id).ToList();
             var actualUnits = actual.Resources!.Select(resource => resource.Properties?.GetStringValue("unit")).ToList();
             var actualGroups = actual.Resources!.SelectMany(resource => resource.Properties?.GetStringArray("groups")!).ToList();
-            var actualTimeRange = await dataSource.GetTimeRangeAsync("/A/B/C", CancellationToken.None);
+            var (begin, end) = await dataSource.GetTimeRangeAsync("/A/B/C", CancellationToken.None);
 
             // assert
             var expectedIds = new List<string>() { "STTZ", "Accx" };
@@ -39,8 +39,8 @@ namespace Nexus.Sources.Tests
             Assert.True(expectedIds.SequenceEqual(actualIds.Skip(49).Take(2)));
             Assert.True(expectedUnits.SequenceEqual(actualUnits.Skip(49).Take(2)));
             Assert.True(expectedGroups.SequenceEqual(actualGroups.Skip(49).Take(2)));
-            Assert.Equal(expectedStartDate, actualTimeRange.Begin);
-            Assert.Equal(expectedEndDate, actualTimeRange.End);
+            Assert.Equal(expectedStartDate, begin);
+            Assert.Equal(expectedEndDate, end);
         }
 
         [Fact]
@@ -96,8 +96,8 @@ namespace Nexus.Sources.Tests
 
             // act
             var catalog = await dataSource.GetCatalogAsync("/A/B/C", CancellationToken.None);
-            var resource = catalog.Resources!.First();
-            var representation = resource.Representations!.First();
+            var resource = catalog.Resources![0];
+            var representation = resource.Representations![0];
             var catalogItem = new CatalogItem(catalog, resource, representation, default);
 
             var begin = new DateTime(2020, 05, 31, 0, 0, 0, DateTimeKind.Utc);

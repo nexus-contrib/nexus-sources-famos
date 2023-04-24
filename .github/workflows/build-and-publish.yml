@@ -35,14 +35,8 @@ jobs:
         if: ${{ env.IS_RELEASE == 'true' }}
         run: python build/create_tag_body.py
 
-      - name: Build
-        run: dotnet publish -c Release -o publish src/Nexus.Sources.Famos/Nexus.Sources.Famos.csproj
-
       - name: Test
-        run: dotnet test -c Release /p:BuildProjectReferences=false
-
-      - name: Zip
-        run: cd publish; tar -zcvf ../artifacts/assets.tar.gz *; cd -
+        run: dotnet test -c Release
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
@@ -50,27 +44,10 @@ jobs:
           name: artifacts
           path: |
             artifacts/*.txt
-            artifacts/*.tar.gz
 
     outputs:
       is_release: ${{ env.IS_RELEASE }}
       version: ${{ env.VERSION }}
-
-  publish_dev:
-
-    needs: build
-    name: Publish (dev)
-    runs-on: ubuntu-latest
-
-    if: ${{ needs.build.outputs.is_release != 'true' }}
-
-    steps:
-
-      - name: Download Artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: artifacts
-          path: artifacts
 
   publish_release:
 
@@ -92,4 +69,3 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           body_path: artifacts/tag_body.txt
-          files: artifacts/assets.tar.gz

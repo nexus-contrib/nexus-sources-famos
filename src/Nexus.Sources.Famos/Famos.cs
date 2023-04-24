@@ -1,11 +1,11 @@
-﻿using ImcFamosFile;
-using Microsoft.Extensions.Logging;
-using Nexus.DataModel;
-using Nexus.Extensibility;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using ImcFamosFile;
+using Microsoft.Extensions.Logging;
+using Nexus.DataModel;
+using Nexus.Extensibility;
 
 namespace Nexus.Sources
 {
@@ -17,7 +17,7 @@ namespace Nexus.Sources
     {
         record CatalogDescription(
             string Title,
-            Dictionary<string, FileSource> FileSources, 
+            Dictionary<string, IReadOnlyList<FileSource>> FileSourceGroups, 
             JsonElement? AdditionalProperties);
 
         #region Fields
@@ -39,11 +39,11 @@ namespace Nexus.Sources
             _config = JsonSerializer.Deserialize<Dictionary<string, CatalogDescription>>(jsonString) ?? throw new Exception("config is null");
         }
 
-        protected override Task<Func<string, Dictionary<string, FileSource>>> GetFileSourceProviderAsync(
+        protected override Task<Func<string, Dictionary<string, IReadOnlyList<FileSource>>>> GetFileSourceProviderAsync(
             CancellationToken cancellationToken)
         {
-            return Task.FromResult<Func<string, Dictionary<string, FileSource>>>(
-                catalogId => _config[catalogId].FileSources);
+            return Task.FromResult<Func<string, Dictionary<string, IReadOnlyList<FileSource>>>>(
+                catalogId => _config[catalogId].FileSourceGroups);
         }
 
         protected override Task<CatalogRegistration[]> GetCatalogRegistrationsAsync(string path, CancellationToken cancellationToken)
@@ -52,7 +52,7 @@ namespace Nexus.Sources
                 return Task.FromResult(_config.Select(entry => new CatalogRegistration(entry.Key, entry.Value.Title)).ToArray());
 
             else
-                return Task.FromResult(new CatalogRegistration[0]);
+                return Task.FromResult(Array.Empty<CatalogRegistration>());
         }
 
         protected override Task<ResourceCatalog> GetCatalogAsync(string catalogId, CancellationToken cancellationToken)
@@ -60,38 +60,41 @@ namespace Nexus.Sources
             var catalogDescription = _config[catalogId];
             var catalog = new ResourceCatalog(id: catalogId);
 
-            foreach (var (fileSourceId, fileSource) in catalogDescription.FileSources)
+            foreach (var (fileSourceId, fileSourceGroup) in catalogDescription.FileSourceGroups)
             {
-                var filePaths = default(string[]);
-                var catalogSourceFiles = fileSource.AdditionalProperties?.GetStringArray("CatalogSourceFiles");
-
-                if (catalogSourceFiles is not null)
+                foreach (var fileSource in fileSourceGroup)
                 {
-                    filePaths = catalogSourceFiles
-                        .Where(filePath => filePath is not null)
-                        .Select(filePath => Path.Combine(Root, filePath!))
-                        .ToArray();
-                }
-                else
-                {
-                    if (!TryGetFirstFile(fileSource, out var filePath))
-                        continue;
+                    var filePaths = default(string[]);
+                    var catalogSourceFiles = fileSource.AdditionalProperties?.GetStringArray("CatalogSourceFiles");
 
-                    filePaths = new[] { filePath };
-                }
+                    if (catalogSourceFiles is not null)
+                    {
+                        filePaths = catalogSourceFiles
+                            .Where(filePath => filePath is not null)
+                            .Select(filePath => Path.Combine(Root, filePath!))
+                            .ToArray();
+                    }
+                    else
+                    {
+                        if (!TryGetFirstFile(fileSource, out var filePath))
+                            continue;
 
-                cancellationToken.ThrowIfCancellationRequested();
+                        filePaths = new[] { filePath };
+                    }
 
-                foreach (var filePath in filePaths)
-                {
-                    using var famosFile = FamosFile.Open(filePath);
-                    var resources = GetResources(famosFile, fileSourceId);
+                    cancellationToken.ThrowIfCancellationRequested();
 
-                    var newCatalog = new ResourceCatalogBuilder(id: catalogId)
-                        .AddResources(resources)
-                        .Build();
+                    foreach (var filePath in filePaths)
+                    {
+                        using var famosFile = FamosFile.Open(filePath);
+                        var resources = GetResources(famosFile, fileSourceId);
 
-                    catalog = catalog.Merge(newCatalog);
+                        var newCatalog = new ResourceCatalogBuilder(id: catalogId)
+                            .AddResources(resources)
+                            .Build();
+
+                        catalog = catalog.Merge(newCatalog);
+                    }
                 }
             }
 
@@ -117,7 +120,7 @@ namespace Nexus.Sources
 
                     // invoke generic 'ReadData' method
                     var methodName = nameof(Famos.ReadData);
-                    var flags = BindingFlags.NonPublic | BindingFlags.Instance;
+                    var flags = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
                     var genericType = FamosUtilities.GetTypeFromNexusDataType(fileDataType);
                     var parameters = new object[] { famosFile, famosFileChannel };
                     var result = (double[])FamosUtilities.InvokeGenericMethod(this, methodName, flags, genericType, parameters);
@@ -147,10 +150,10 @@ namespace Nexus.Sources
                         Logger.LogDebug("The actual buffer size does not match the expected size, which indicates an incomplete file");
                     }
                 }
-            });
+            }, cancellationToken);
         }
 
-        private double[] ReadData<T>(FamosFile famosFile, FamosFileChannel channel) where T : unmanaged
+        private static double[] ReadData<T>(FamosFile famosFile, FamosFileChannel channel) where T : unmanaged
         {
             var applyCalibration = true;
 
@@ -178,7 +181,7 @@ namespace Nexus.Sources
             return doubleData;
         }
 
-        private List<Resource> GetResources(FamosFile famosFile, string fileSourceId)
+        private static List<Resource> GetResources(FamosFile famosFile, string fileSourceId)
         {
             var fields = famosFile.Fields.Where(field => field.Type == FamosFileFieldType.MultipleYToSingleEquidistantTime).ToList();
 
@@ -239,7 +242,7 @@ namespace Nexus.Sources
             }).ToList();
         }
 
-        private bool TryEnforceNamingConvention(string resourceId, [NotNullWhen(returnValue: true)] out string newResourceId)
+        private static bool TryEnforceNamingConvention(string resourceId, [NotNullWhen(returnValue: true)] out string newResourceId)
         {
             newResourceId = resourceId;
             newResourceId = Resource.InvalidIdCharsExpression.Replace(newResourceId, "");

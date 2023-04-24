@@ -1,3 +1,7 @@
+## v2.0.0-beta.1 - 2023-04-24
+
+Follow Nexus changes.
+
 ## v1.0.0 - 2022-10-39
 
 This is the first release.
