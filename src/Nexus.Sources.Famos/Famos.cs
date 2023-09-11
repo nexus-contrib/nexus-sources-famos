@@ -101,54 +101,57 @@ namespace Nexus.Sources
             return Task.FromResult(catalog);
         }
 
-        protected override Task ReadSingleAsync(ReadInfo info, CancellationToken cancellationToken)
+        protected override Task ReadAsync(ReadInfo info, StructuredFileReadRequest[] readRequests, CancellationToken cancellationToken)
         {
             return Task.Run(() =>
             {
-                using var famosFile = FamosFile.Open(info.FilePath);
-
-                var channels = famosFile.Groups.SelectMany(group => group.Channels).Concat(famosFile.Channels).ToList();
-                var famosFileChannel = channels.FirstOrDefault(current => current.Name == info.OriginalName);
-
-                if (famosFileChannel != default)
+                foreach (var readRequest in readRequests)
                 {
-                    var component = famosFile.FindComponent(famosFileChannel);
-                    var fileDataType = FamosUtilities.GetNexusDataTypeFromFamosDataType(component.PackInfo.DataType);
+                    using var famosFile = FamosFile.Open(info.FilePath);
 
-                    if (fileDataType == 0)
-                        throw new Exception($"The data type '{component.PackInfo.DataType}' is not supported.");
+                    var channels = famosFile.Groups.SelectMany(group => group.Channels).Concat(famosFile.Channels).ToList();
+                    var famosFileChannel = channels.FirstOrDefault(current => current.Name == readRequest.OriginalName);
 
-                    // invoke generic 'ReadData' method
-                    var methodName = nameof(Famos.ReadData);
-                    var flags = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
-                    var genericType = FamosUtilities.GetTypeFromNexusDataType(fileDataType);
-                    var parameters = new object[] { famosFile, famosFileChannel };
-                    var result = (double[])FamosUtilities.InvokeGenericMethod(this, methodName, flags, genericType, parameters);
-                    var elementSize = info.CatalogItem.Representation.ElementSize;
-
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    // write data
-                    if (result.Length == info.FileLength)
+                    if (famosFileChannel != default)
                     {
-                        var byteResult = MemoryMarshal.AsBytes(result.AsSpan());
-                        var offset = (int)info.FileOffset * elementSize;
-                        var length = (int)info.FileBlock * elementSize;
+                        var component = famosFile.FindComponent(famosFileChannel);
+                        var fileDataType = FamosUtilities.GetNexusDataTypeFromFamosDataType(component.PackInfo.DataType);
 
-                        byteResult
-                            .Slice(offset, length)
-                            .CopyTo(info.Data.Span);
+                        if (fileDataType == 0)
+                            throw new Exception($"The data type '{component.PackInfo.DataType}' is not supported.");
 
-                        info
-                            .Status
-                            .Span
-                            .Fill(1);
-                    }
-                    // skip data
-                    else
-                    {
-                        Logger.LogDebug("The actual buffer size does not match the expected size, which indicates an incomplete file");
-                    }
+                        // invoke generic 'ReadData' method
+                        var methodName = nameof(Famos.ReadData);
+                        var flags = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
+                        var genericType = FamosUtilities.GetTypeFromNexusDataType(fileDataType);
+                        var parameters = new object[] { famosFile, famosFileChannel };
+                        var result = (double[])FamosUtilities.InvokeGenericMethod(this, methodName, flags, genericType, parameters);
+                        var elementSize = readRequest.CatalogItem.Representation.ElementSize;
+
+                        cancellationToken.ThrowIfCancellationRequested();
+
+                        // write data
+                        if (result.Length == info.FileLength)
+                        {
+                            var byteResult = MemoryMarshal.AsBytes(result.AsSpan());
+                            var offset = (int)info.FileOffset * elementSize;
+                            var length = (int)info.FileBlock * elementSize;
+
+                            byteResult
+                                .Slice(offset, length)
+                                .CopyTo(readRequest.Data.Span);
+
+                            readRequest
+                                .Status
+                                .Span
+                                .Fill(1);
+                        }
+                        // skip data
+                        else
+                        {
+                            Logger.LogDebug("The actual buffer size does not match the expected size, which indicates an incomplete file");
+                        }
+                    }   
                 }
             }, cancellationToken);
         }
