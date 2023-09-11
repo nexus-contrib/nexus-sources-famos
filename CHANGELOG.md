@@ -1,3 +1,7 @@
+## v2.0.0-beta.4 - 2023-09-11
+
+Fix missing method exception.
+
 ## v2.0.0-beta.3 - 2023-09-11
 
 Follow Nexus changes.

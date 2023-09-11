@@ -6,9 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Nexus.Sources.StructuredFile" Version="2.0.0-beta.11" />
+    <PackageReference Include="Nexus.Sources.StructuredFile" Version="2.0.0-beta.13" />
     <PackageReference Include="ImcFamosFile" Version="2.0.1" />
-    <PackageReference Include="Nexus.Extensibility" Version="2.0.0-beta.8">
+    <PackageReference Include="Nexus.Extensibility" Version="2.0.0-beta.15">
       <ExcludeAssets>runtime;native</ExcludeAssets>
     </PackageReference>
   </ItemGroup>
