@@ -18,7 +18,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Fetch tags
         run: git fetch --tags --force
@@ -35,37 +35,10 @@ jobs:
         if: ${{ env.IS_RELEASE == 'true' }}
         run: python build/create_tag_body.py
 
+      - name: Set up dotnet
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
       - name: Test
         run: dotnet test -c Release
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: artifacts
-          path: |
-            artifacts/*.txt
-
-    outputs:
-      is_release: ${{ env.IS_RELEASE }}
-      version: ${{ env.VERSION }}
-
-  publish_release:
-
-    needs: build
-    name: Publish (release)
-    runs-on: ubuntu-latest
-
-    if: ${{ needs.build.outputs.is_release == 'true' }}
-
-    steps:
-
-      - name: Download Artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: artifacts
-          path: artifacts
-
-      - name: GitHub Release Artifacts
-        uses: softprops/action-gh-release@v1
-        with:
-          body_path: artifacts/tag_body.txt

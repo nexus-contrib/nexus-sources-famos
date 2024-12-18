@@ -23,7 +23,7 @@ public class FamosTests
         await dataSource.SetContextAsync(context, NullLogger.Instance, CancellationToken.None);
 
         // act
-        var actual = await dataSource.GetCatalogAsync("/A/B/C", CancellationToken.None);
+        var actual = await dataSource.EnrichCatalogAsync(new("/A/B/C"), CancellationToken.None);
         var actualIds = actual.Resources!.Select(resource => resource.Id).ToList();
         var actualUnits = actual.Resources!.Select(resource => resource.Properties?.GetStringValue("unit")).ToList();
         var actualGroups = actual.Resources!.SelectMany(resource => resource.Properties?.GetStringArray("groups")!).ToList();
@@ -95,7 +95,7 @@ public class FamosTests
         await dataSource.SetContextAsync(context, NullLogger.Instance, CancellationToken.None);
 
         // act
-        var catalog = await dataSource.GetCatalogAsync("/A/B/C", CancellationToken.None);
+        var catalog = await dataSource.EnrichCatalogAsync(new("/A/B/C"), CancellationToken.None);
         var resource = catalog.Resources![0];
         var representation = resource.Representations![0];
         var catalogItem = new CatalogItem(catalog, resource, representation, default);
@@ -104,7 +104,7 @@ public class FamosTests
         var end = new DateTime(2020, 06, 01, 0, 0, 0, DateTimeKind.Utc);
         var (data, status) = ExtensibilityUtilities.CreateBuffers(representation, begin, end);
 
-        var result = new ReadRequest(catalogItem, data, status);
+        var result = new ReadRequest(resource.Id, catalogItem, data, status);
         await dataSource.ReadAsync(begin, end, [result], default!, new Progress<double>(), CancellationToken.None);
 
         // assert

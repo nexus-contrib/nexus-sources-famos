@@ -55,10 +55,9 @@ public class Famos : StructuredFileDataSource
             return Task.FromResult(Array.Empty<CatalogRegistration>());
     }
 
-    protected override Task<ResourceCatalog> GetCatalogAsync(string catalogId, CancellationToken cancellationToken)
+    protected override Task<ResourceCatalog> EnrichCatalogAsync(ResourceCatalog catalog, CancellationToken cancellationToken)
     {
-        var catalogDescription = _config[catalogId];
-        var catalog = new ResourceCatalog(id: catalogId);
+        var catalogDescription = _config[catalog.Id];
 
         foreach (var (fileSourceId, fileSourceGroup) in catalogDescription.FileSourceGroups)
         {
@@ -89,7 +88,7 @@ public class Famos : StructuredFileDataSource
                     using var famosFile = FamosFile.Open(filePath);
                     var resources = GetResources(famosFile, fileSourceId);
 
-                    var newCatalog = new ResourceCatalogBuilder(id: catalogId)
+                    var newCatalog = new ResourceCatalogBuilder(id: catalog.Id)
                         .AddResources(resources)
                         .Build();
 
@@ -101,7 +100,7 @@ public class Famos : StructuredFileDataSource
         return Task.FromResult(catalog);
     }
 
-    protected override Task ReadAsync(ReadInfo info, StructuredFileReadRequest[] readRequests, CancellationToken cancellationToken)
+    protected override Task ReadAsync(ReadInfo info, ReadRequest[] readRequests, CancellationToken cancellationToken)
     {
         return Task.Run(() =>
         {
@@ -110,7 +109,7 @@ public class Famos : StructuredFileDataSource
                 using var famosFile = FamosFile.Open(info.FilePath);
 
                 var channels = famosFile.Groups.SelectMany(group => group.Channels).Concat(famosFile.Channels).ToList();
-                var famosFileChannel = channels.FirstOrDefault(current => current.Name == readRequest.OriginalName);
+                var famosFileChannel = channels.FirstOrDefault(current => current.Name == readRequest.OriginalResourceName);
 
                 if (famosFileChannel != default)
                 {
@@ -121,7 +120,7 @@ public class Famos : StructuredFileDataSource
                         throw new Exception($"The data type '{component.PackInfo.DataType}' is not supported.");
 
                     // invoke generic 'ReadData' method
-                    var methodName = nameof(Famos.ReadData);
+                    var methodName = nameof(ReadData);
                     var flags = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
                     var genericType = FamosUtilities.GetTypeFromNexusDataType(fileDataType);
                     var parameters = new object[] { famosFile, famosFileChannel };
