@@ -2,15 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>$(TargetFrameworkVersion)</TargetFramework>
-    <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="ImcFamosFile" Version="2.0.1" />
-    <PackageReference Include="Nexus.Extensibility" Version="2.0.0-beta.43">
+    <PackageReference Include="Nexus.Extensibility" Version="2.0.0-beta.50">
       <ExcludeAssets>runtime;native</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="Nexus.Sources.StructuredFile" Version="2.0.0-beta.36" />
+    <PackageReference Include="Nexus.Sources.StructuredFile" Version="2.0.0-beta.40" />
   </ItemGroup>
 
 </Project>
