@@ -218,9 +218,12 @@ public class Famos : StructuredFileDataSource<FamosSettings, FamosAdditionalFile
                 var xAxisScaling = component.XAxisScaling;
 
                 if (xAxisScaling?.Unit != "s")
-                    throw new Exception("Could not determine the sample rate.");
+                    throw new Exception("Could not determine the sample period.");
 
-                var samplePeriod = TimeSpan.FromSeconds((double)xAxisScaling.DeltaX);
+                /* Famos file may contain numbers like 1.9999999999999998E-05
+                 * so we round to 100 ns before further processing
+                 */
+                var samplePeriod = TimeSpan.FromSeconds(Math.Round((double)xAxisScaling.DeltaX, 8));
 
                 // group name
                 //var group = famosFile.Groups.FirstOrDefault(group => group.Resources.Contains(famosFileChannel));

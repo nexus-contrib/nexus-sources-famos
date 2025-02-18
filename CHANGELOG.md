@@ -1,3 +1,7 @@
+## v2.0.0-beta.36 - 2025-02-18
+
+- Fix incorrect sample period due to rounding errors
+
 ## v2.0.0-beta.35 - 2025-02-07
 
 - Follow Nexus changes
