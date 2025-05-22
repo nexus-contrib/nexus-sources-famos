@@ -1,3 +1,7 @@
+## v2.0.0-beta.37 - 2025-05-22
+
+- Follow ImcFamosFile changes.
+
 ## v2.0.0-beta.36 - 2025-02-18
 
 - Fix incorrect sample period due to rounding errors
